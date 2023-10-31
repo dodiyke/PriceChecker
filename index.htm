@@ -78,7 +78,7 @@
         function fetchItemInformation(barcode) {
             gapi.client.sheets.spreadsheets.values.get({
                 spreadsheetId: "1aWKsnNu7FOvDifNXtd5dmCxQ4vmBhZSthpIF9X9lLw4",
-                range: "Sheet2!A:F", // Adjust to your specific tab and range
+                range: "Sheet2!A1:F1500", // Adjust to your specific tab and range
             }).then((response) => {
                 const values = response.result.values;
                 if (values) {
