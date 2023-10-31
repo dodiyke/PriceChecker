@@ -13,6 +13,11 @@
 
     <!-- Button to start scanning -->
     <button id="scan-button">Scan Barcode</button>
+    <script>
+        document.getElementById("scan-button").addEventListener("click", function() {
+            alert("Button Clicked!"); // Test if the click event works
+        });
+    </script>
 
     <!-- Display item information -->
     <div id="item-info" style="display: none;">
@@ -51,17 +56,14 @@
             const barcode = result.codeResult.code;
             fetchItemInformation(barcode);
         });
-
+		
 		Quagga.onProcessed((result) => {
 		if (result) {
 				Quagga.start();
 			}
 		});
 
-        // Start scanning when the button is clicked
-        document.getElementById("scan-button").addEventListener("click", function() {
-            Quagga.start();
-        });
+
 
         // Load the Google Sheets API
         gapi.load("client", initGoogleSheetsAPI);
@@ -98,10 +100,9 @@
                 } else {
                     alert("No data available in the Google Sheet.");
                 }
-            })
-	    .catch((error) => {
-			console.error("Error fetching data from Google Sheets:", error);
-		});;
+            }).catch((error) => {
+		console.error("Error fetching data from Google Sheets:", error);
+	});
         }
     </script>
 </body>
