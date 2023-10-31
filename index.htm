@@ -8,17 +8,11 @@
 
     <!-- Create a container for the video feed -->
     <div id="barcode-scanner">
-        <video id="camera-feed"></video>
+        <video id="camera-feed" autoplay playsinline></video>
     </div>
 
     <!-- Button to start scanning -->
     <button id="scan-button">Scan Barcode</button>
-    <script>
-        document.getElementById("scan-button").addEventListener("click", function() {
-            alert("Button Clicked!"); // Test if the click event works
-		Quagga.start();
-        });
-    </script>
 
     <!-- Display item information -->
     <div id="item-info" style="display: none;">
@@ -29,44 +23,12 @@
         <img src="" id="itemPhoto" alt="Item Photo">
     </div>
 
-    <!-- Include QuaggaJS library for barcode scanning -->
-    <script src="https://cdn.rawgit.com/serratus/quaggaJS/0.12.1/dist/quagga.min.js"></script>
-
     <!-- Include the Google Sheets API client library -->
     <script src="https://apis.google.com/js/api.js"></script>
 
     <!-- Your custom JavaScript -->
     <script>
-        // Initialize QuaggaJS
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector("#camera-feed"),
-                constraints: {
-                    width: 640,
-                    height: 480,
-                },
-            },
-            decoder: {
-                readers: ["ean_reader"],
-            },
-        });
-
-        Quagga.onDetected((result) => {
-            const barcode = result.codeResult.code;
-            fetchItemInformation(barcode);
-        });
-		
-		Quagga.onProcessed((result) => {
-		if (result) {
-				Quagga.start();
-			}
-		});
-
-
-
-        // Load the Google Sheets API
+        // Initialize the Google Sheets API
         gapi.load("client", initGoogleSheetsAPI);
 
         function initGoogleSheetsAPI() {
@@ -75,26 +37,77 @@
                 discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
             }).then(() => {
                 // API is ready
+                // Access the user's camera after API initialization
+                accessCamera();
             });
         }
 
-        function fetchItemInformation(barcode) {
+        // Access the user's camera
+        function accessCamera() {
+            const videoElement = document.getElementById("camera-feed");
+
+            document.getElementById("scan-button").addEventListener("click", () => {
+                if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then((stream) => {
+                            videoElement.srcObject = stream;
+                            videoElement.onloadedmetadata = () => {
+                                videoElement.play();
+                                // Start scanning or capture barcode data here
+                                scanBarcode(videoElement);
+                            };
+                        })
+                        .catch((error) => {
+                            console.error("Error accessing camera:", error);
+                        });
+                } else {
+                    console.error("getUserMedia is not supported by this browser.");
+                }
+            });
+        }
+
+        // Barcode scanning logic using BarcodeDetector
+        function scanBarcode(videoElement) {
+            if ('BarcodeDetector' in window) {
+                const barcodeDetector = new BarcodeDetector();
+
+                barcodeDetector.detect(videoElement)
+                    .then((barcodes) => {
+                        if (barcodes.length > 0) {
+                            const barcode = barcodes[0].rawValue;
+                            // Fetch item information from Google Sheets based on the barcode
+                            fetchItemInformationFromGoogleSheets(barcode);
+                        } else {
+                            alert("No barcode detected.");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error detecting barcode:", error);
+                    });
+            } else {
+                alert("BarcodeDetector API is not supported by this browser.");
+            }
+        }
+
+        // Fetch item information from Google Sheets using the Google Sheets API
+        function fetchItemInformationFromGoogleSheets(barcode) {
+            // Use the Google Sheets API to fetch data based on the barcode
+            // Replace with your actual API calls
+            // Example: you can use the gapi library for Google Sheets API
             gapi.client.sheets.spreadsheets.values.get({
                 spreadsheetId: "1aWKsnNu7FOvDifNXtd5dmCxQ4vmBhZSthpIF9X9lLw4",
-                range: "Sheet2!A1:F1500", // Adjust to your specific tab and range
+                range: "Sheet2!A1:F1500", // Adjust to your specific range
             }).then((response) => {
                 const values = response.result.values;
                 if (values) {
                     const item = values.find((row) => row[0] === barcode);
                     if (item) {
-                        const [barcode, name, description, photoUrl, price] = item;
+                        const [barcode, name, description, price, photoUrl] = item;
                         document.getElementById("itemName").textContent = name;
                         document.getElementById("itemDescription").textContent = description;
                         document.getElementById("itemPrice").textContent = price;
                         document.getElementById("itemPhoto").src = photoUrl;
                         document.getElementById("item-info").style.display = "block";
-                        // Stop scanning after a successful match
-                        Quagga.stop();
                     } else {
                         alert("Item not found.");
                     }
@@ -102,9 +115,12 @@
                     alert("No data available in the Google Sheet.");
                 }
             }).catch((error) => {
-		console.error("Error fetching data from Google Sheets:", error);
-	});
+                console.error("Error fetching data from Google Sheets:", error);
+            });
         }
     </script>
+
+    <!-- Load the Google Sheets API client library -->
+    <script async defer src="https://apis.google.com/js/client.js?onload=initGoogleSheetsAPI"></script>
 </body>
 </html>
