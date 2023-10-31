@@ -52,6 +52,12 @@
             fetchItemInformation(barcode);
         });
 
+		Quagga.onProcessed((result) => {
+		if (result) {
+				Quagga.start();
+			}
+		});
+
         // Start scanning when the button is clicked
         document.getElementById("scan-button").addEventListener("click", function() {
             Quagga.start();
