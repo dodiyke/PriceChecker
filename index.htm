@@ -98,7 +98,10 @@
                 } else {
                     alert("No data available in the Google Sheet.");
                 }
-            });
+            })
+	    .catch((error) => {
+			console.error("Error fetching data from Google Sheets:", error);
+		});;
         }
     </script>
 </body>
