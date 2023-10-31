@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Scanner</title>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+
+    <!-- Create a container to display the scanned QR code -->
+    <div id="qrcode"></div>
+
+    <!-- Create elements to display item information -->
+    <div>
+        <h2>Item Information</h2>
+        <p><strong>Name:</strong> <span id="itemName"></span></p>
+        <p><strong>Description:</strong> <span id="itemDescription"></span></p>
+        <p><strong>Price:</strong> <span id="itemPrice"></span></p>
+        <img src="" id="Image" alt="Item Photo">
+    </div>
+
+    <!-- Include the necessary JavaScript libraries -->
+    <script src="https://rawgit.com/sitepoint-editors/jsqrcode/master/src/qr_packed.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.0.3/html5-qrcode.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Your custom JavaScript -->
+    <script>
+        // Initialize the QR code scanner
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "qrcode",
+            {
+                fps: 10,
+                qrbox: 250
+            }
+        );
+
+        // When a QR code is scanned, fetch item information from Google Sheets
+        html5QrcodeScanner.render(async (result) => {
+            try {
+                // Fetch data from Google Sheets using Google Sheets API
+                const sheetId = '1aWKsnNu7FOvDifNXtd5dmCxQ4vmBhZSthpIF9X9lLw4';
+                const apiKey = 'AIzaSyDaPgYapqR8CZs1CBas4SDF3MxQVAOKeAU';
+                const tabName = 'Sheet2'; // Replace with the specific tab name.
+                const range = `${tabName}!A1:D1500`;
+
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.values && data.values.length >= 1) {
+                    const [name, description, photoUrl, price] = data.values[0];
+
+                    // Display the item information on the HTML page
+                    document.getElementById('itemName').textContent = name;
+                    document.getElementById('itemDescription').textContent = description;
+                    document.getElementById('itemPrice').textContent = price;
+                    document.getElementById('itemPhoto').src = photoUrl;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>
