@@ -11,6 +11,9 @@
         <video id="camera-feed"></video>
     </div>
 
+    <!-- Button to start scanning -->
+    <button id="scan-button">Scan Barcode</button>
+
     <!-- Display item information -->
     <div id="item-info" style="display: none;">
         <h2>Item Information</h2>
@@ -49,7 +52,10 @@
             fetchItemInformation(barcode);
         });
 
-        Quagga.start();
+        // Start scanning when the button is clicked
+        document.getElementById("scan-button").addEventListener("click", function() {
+            Quagga.start();
+        });
 
         // Load the Google Sheets API
         gapi.load("client", initGoogleSheetsAPI);
@@ -78,6 +84,8 @@
                         document.getElementById("itemPrice").textContent = price;
                         document.getElementById("itemPhoto").src = photoUrl;
                         document.getElementById("item-info").style.display = "block";
+                        // Stop scanning after a successful match
+                        Quagga.stop();
                     } else {
                         alert("Item not found.");
                     }
